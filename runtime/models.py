@@ -33,3 +33,30 @@ class SessionInfo(BaseModel):
     status: str
     message_count: int
     variables: Dict[str, Any]
+
+
+# ── Voice-bot call models ─────────────────────────────────────────────────
+
+
+class DetectedIntent(BaseModel):
+    intent: str
+    flow_name: str
+    score: float
+    matched_example: str
+
+
+class CallResponse(BaseModel):
+    call_id: str
+    messages: List[Dict[str, Any]]
+    status: str  # "awaiting_intent" | "flow_active" | "completed"
+    detected_intent: Optional[DetectedIntent] = None
+    input_prompt: Optional[InputPrompt] = None
+
+
+class CallInfo(BaseModel):
+    call_id: str
+    phase: str
+    intent: Optional[str] = None
+    flow_id: Optional[str] = None
+    message_count: int
+    variables: Dict[str, Any]

@@ -44,3 +44,35 @@ def delete(session_id: str) -> bool:
 
 def list_all() -> list[Session]:
     return list(_store.values())
+
+
+# ── Call sessions (voice-bot) ─────────────────────────────────────────────
+
+
+@dataclass
+class CallSession:
+    id: str
+    phase: str = "awaiting_intent"   # awaiting_intent | flow_active | completed
+    intent: Optional[str] = None
+    flow_id: Optional[str] = None
+    graph_config: Optional[Dict[str, Any]] = None
+    message_offset: int = 0
+    messages: list = field(default_factory=list)  # welcome + intent-phase msgs
+
+
+_call_store: Dict[str, CallSession] = {}
+
+
+def create_call() -> CallSession:
+    cid = uuid.uuid4().hex
+    call = CallSession(id=cid)
+    _call_store[cid] = call
+    return call
+
+
+def get_call(call_id: str) -> Optional[CallSession]:
+    return _call_store.get(call_id)
+
+
+def delete_call(call_id: str) -> bool:
+    return _call_store.pop(call_id, None) is not None
