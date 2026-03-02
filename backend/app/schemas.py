@@ -43,3 +43,25 @@ class FlowDB(FlowBase):
     id: Optional[str] = Field(default=None, alias="_id")
     createdAt: datetime
     updatedAt: datetime
+
+
+# ── Auth ──
+
+class UserSignup(BaseModel):
+    email: str
+    password: str
+    name: str
+    orgId: str
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserInfo(BaseModel):
+    email: str
+    name: str
+    orgId: str
+
+class UserOut(BaseModel):
+    access_token: str
+    user: UserInfo

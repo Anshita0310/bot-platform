@@ -1,21 +1,32 @@
-import { Download, Trash2, Bot, PlayCircle, FileBox } from "lucide-react";
+import { Download, Trash2, Bot, PlayCircle, FileBox, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
+  flowName?: string;
   onExportJSON: () => void;
   onClear: () => void;
   onTestFlow: () => void;
   onLoadExample: () => void;
 }
 
-const FlowToolbar = ({ onExportJSON, onClear, onTestFlow, onLoadExample }: Props) => {
+const FlowToolbar = ({ flowName, onExportJSON, onClear, onTestFlow, onLoadExample }: Props) => {
+  const navigate = useNavigate();
+
   return (
     <header className="h-14 bg-sidebar border-b border-border flex items-center justify-between px-4">
       <div className="flex items-center gap-3">
+        <button
+          onClick={() => navigate("/")}
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <div className="bg-primary p-1.5 rounded-md">
           <Bot size={20} className="text-primary-foreground" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-foreground tracking-tight">Dialog Flow Builder</h1>
+          <h1 className="text-sm font-bold text-foreground tracking-tight">{flowName || "Dialog Flow Builder"}</h1>
           <p className="text-[10px] text-muted-foreground">Design your bot conversation</p>
         </div>
       </div>

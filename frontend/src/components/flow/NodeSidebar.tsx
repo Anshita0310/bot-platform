@@ -1,7 +1,9 @@
-import { MessageSquare, Box, CheckCircle, Wrench } from "lucide-react";
+import { MessageSquare, Box, CheckCircle, Wrench, Play, Square } from "lucide-react";
 import type { NodeType } from "@/types/flow";
 
 const nodeTypes: { type: NodeType; label: string; icon: React.ReactNode; color: string; desc: string }[] = [
+  { type: "start", label: "Start", icon: <Play size={18} />, color: "bg-node-entity", desc: "Flow entry point" },
+  { type: "end", label: "End", icon: <Square size={18} />, color: "bg-destructive", desc: "Flow exit point" },
   { type: "message", label: "Message", icon: <MessageSquare size={18} />, color: "bg-node-message", desc: "Send a text message" },
   { type: "entity", label: "Entity", icon: <Box size={18} />, color: "bg-node-entity", desc: "Collect user input" },
   { type: "confirmation", label: "Confirmation", icon: <CheckCircle size={18} />, color: "bg-node-confirmation", desc: "Yes/No question" },

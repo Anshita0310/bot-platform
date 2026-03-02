@@ -1,4 +1,16 @@
-export type NodeType = 'message' | 'entity' | 'confirmation' | 'tool';
+export type NodeType = 'start' | 'end' | 'message' | 'entity' | 'confirmation' | 'tool';
+
+export interface StartNodeData {
+  [key: string]: unknown;
+  type: 'start';
+  label: string;
+}
+
+export interface EndNodeData {
+  [key: string]: unknown;
+  type: 'end';
+  label: string;
+}
 
 export interface MessageNodeData {
   [key: string]: unknown;
@@ -33,4 +45,4 @@ export interface ToolNodeData {
   description: string;
 }
 
-export type FlowNodeData = MessageNodeData | EntityNodeData | ConfirmationNodeData | ToolNodeData;
+export type FlowNodeData = StartNodeData | EndNodeData | MessageNodeData | EntityNodeData | ConfirmationNodeData | ToolNodeData;

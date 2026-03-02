@@ -1,9 +1,11 @@
 import { memo, useState } from "react";
 import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
-import { MessageSquare, Box, CheckCircle, Wrench, Pencil, X, Check, Trash2 } from "lucide-react";
+import { MessageSquare, Box, CheckCircle, Wrench, Pencil, X, Check, Trash2, Play, Square } from "lucide-react";
 import type { FlowNodeData } from "@/types/flow";
 
 const nodeConfig = {
+  start: { icon: <Play size={16} />, color: "border-node-entity", bgAccent: "bg-node-entity/10", headerBg: "bg-node-entity", label: "Start" },
+  end: { icon: <Square size={16} />, color: "border-destructive", bgAccent: "bg-destructive/10", headerBg: "bg-destructive", label: "End" },
   message: { icon: <MessageSquare size={16} />, color: "border-node-message", bgAccent: "bg-node-message/10", headerBg: "bg-node-message", label: "Message" },
   entity: { icon: <Box size={16} />, color: "border-node-entity", bgAccent: "bg-node-entity/10", headerBg: "bg-node-entity", label: "Entity" },
   confirmation: { icon: <CheckCircle size={16} />, color: "border-node-confirmation", bgAccent: "bg-node-confirmation/10", headerBg: "bg-node-confirmation", label: "Confirmation" },
@@ -29,7 +31,7 @@ const CustomNode = ({ data, id }: NodeProps) => {
 
   return (
     <div className={`min-w-[200px] max-w-[260px] rounded-lg border-2 ${config.color} bg-card shadow-lg`}>
-      <Handle type="target" position={Position.Top} className="!w-3 !h-3" />
+      {nodeData.type !== "start" && <Handle type="target" position={Position.Top} className="!w-3 !h-3" />}
 
       {/* Header */}
       <div className={`${config.headerBg} text-white px-3 py-2 rounded-t-[6px] flex items-center gap-2`}>
@@ -65,6 +67,11 @@ const CustomNode = ({ data, id }: NodeProps) => {
 
       {/* Body */}
       <div className={`px-3 py-2.5 text-xs space-y-1.5 ${config.bgAccent}`}>
+        {(nodeData.type === "start" || nodeData.type === "end") && (
+          <div className="text-muted-foreground text-center py-1">
+            {nodeData.type === "start" ? "Flow begins here" : "Flow ends here"}
+          </div>
+        )}
         {nodeData.type === "message" && (
           <div>
             <span className="text-muted-foreground">Message:</span>
@@ -103,7 +110,7 @@ const CustomNode = ({ data, id }: NodeProps) => {
         )}
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!w-3 !h-3" />
+      {nodeData.type !== "end" && <Handle type="source" position={Position.Bottom} className="!w-3 !h-3" />}
       {nodeData.type === "confirmation" && (
         <>
           <Handle type="source" position={Position.Right} id="yes" className="!w-3 !h-3 !bg-node-entity !border-node-entity" style={{ top: '60%' }} />

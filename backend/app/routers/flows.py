@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from bson import ObjectId
 import orjson
 
@@ -9,6 +9,7 @@ from ..db import get_db
 from ..schemas import FlowCreate, FlowDB, FlowUpdate, FlowBase
 from ..validators import validate_flow
 from ..simulator import run_once
+from ..auth import get_current_user
 
 router = APIRouter(prefix="/api/flows", tags=["flows"])
 
@@ -19,8 +20,12 @@ def _serialize_id(doc):
 
 
 @router.get("/", response_model=List[FlowDB])
-async def list_flows(orgId: str, projectId: Optional[str] = None, db=Depends(get_db)):
-    q = {"orgId": orgId}
+async def list_flows(
+    projectId: Optional[str] = None,
+    db=Depends(get_db),
+    user: Dict[str, Any] = Depends(get_current_user),
+):
+    q = {"orgId": user["orgId"]}
     if projectId:
         q["projectId"] = projectId
     cur = db.flows.find(q).sort("updatedAt", -1)
@@ -29,7 +34,7 @@ async def list_flows(orgId: str, projectId: Optional[str] = None, db=Depends(get
 
 
 @router.get("/{flow_id}", response_model=FlowDB)
-async def get_flow(flow_id: str, db=Depends(get_db)):
+async def get_flow(flow_id: str, db=Depends(get_db), user: Dict[str, Any] = Depends(get_current_user)):
     try:
         oid = ObjectId(flow_id)
     except Exception:
@@ -41,8 +46,10 @@ async def get_flow(flow_id: str, db=Depends(get_db)):
 
 
 @router.post("/", status_code=201, response_model=FlowDB)
-async def create_flow(payload: FlowCreate, db=Depends(get_db)):
-    validate_flow(payload)
+async def create_flow(payload: FlowCreate, db=Depends(get_db), user: Dict[str, Any] = Depends(get_current_user)):
+    payload.orgId = user["orgId"]
+    if not payload.isDraft:
+        validate_flow(payload)
 
     now = datetime.utcnow()
     doc = payload.model_dump()
@@ -57,7 +64,7 @@ async def create_flow(payload: FlowCreate, db=Depends(get_db)):
 
 
 @router.put("/{flow_id}", response_model=FlowDB)
-async def update_flow(flow_id: str, payload: FlowUpdate, db=Depends(get_db)):
+async def update_flow(flow_id: str, payload: FlowUpdate, db=Depends(get_db), user: Dict[str, Any] = Depends(get_current_user)):
     try:
         oid = ObjectId(flow_id)
     except Exception:
@@ -81,8 +88,7 @@ async def update_flow(flow_id: str, payload: FlowUpdate, db=Depends(get_db)):
 
     if updated.get("isDraft") is False:
         updated["version"] = int(updated.get("version", 1)) + 1
-
-    validate_flow(FlowBase(**{k: v for k, v in updated.items() if k in FlowBase.model_fields}))
+        validate_flow(FlowBase(**{k: v for k, v in updated.items() if k in FlowBase.model_fields}))
 
     updated["updatedAt"] = datetime.utcnow()
     await db.flows.replace_one({"_id": oid}, updated)
@@ -91,7 +97,7 @@ async def update_flow(flow_id: str, payload: FlowUpdate, db=Depends(get_db)):
 
 
 @router.delete("/{flow_id}", status_code=204)
-async def delete_flow(flow_id: str, db=Depends(get_db)):
+async def delete_flow(flow_id: str, db=Depends(get_db), user: Dict[str, Any] = Depends(get_current_user)):
     try:
         oid = ObjectId(flow_id)
     except Exception:
@@ -103,7 +109,7 @@ async def delete_flow(flow_id: str, db=Depends(get_db)):
 
 
 @router.get("/{flow_id}/export")
-async def export_flow(flow_id: str, db=Depends(get_db)):
+async def export_flow(flow_id: str, db=Depends(get_db), user: Dict[str, Any] = Depends(get_current_user)):
     try:
         oid = ObjectId(flow_id)
     except Exception:
@@ -118,7 +124,7 @@ async def export_flow(flow_id: str, db=Depends(get_db)):
 
 
 @router.post("/import", response_model=FlowDB)
-async def import_flow(flow: FlowCreate, db=Depends(get_db)):
+async def import_flow(flow: FlowCreate, db=Depends(get_db), user: Dict[str, Any] = Depends(get_current_user)):
     validate_flow(flow)
     now = datetime.utcnow()
     doc = flow.model_dump()
@@ -131,7 +137,7 @@ async def import_flow(flow: FlowCreate, db=Depends(get_db)):
 
 
 @router.post("/{flow_id}/simulate")
-async def simulate(flow_id: str, user_inputs: dict | None = None, db=Depends(get_db)):
+async def simulate(flow_id: str, user_inputs: dict | None = None, db=Depends(get_db), user: Dict[str, Any] = Depends(get_current_user)):
     try:
         oid = ObjectId(flow_id)
     except Exception:

@@ -53,6 +53,26 @@ const ChatTestPanel = ({ nodes, edges, onClose, onHighlightNode }: Props) => {
       onHighlightNode(node.id);
 
       switch (data.type) {
+        case "start":
+          // Auto-advance through start node
+          setTimeout(() => {
+            const nextNodes = getNextNodes(node.id);
+            if (nextNodes.length > 0) {
+              processNode(nextNodes[0]);
+            } else {
+              setFinished(true);
+              setMessages((prev) => [...prev, { role: "bot", text: "✅ Flow complete!" }]);
+              onHighlightNode(null);
+            }
+          }, 300);
+          break;
+
+        case "end":
+          setFinished(true);
+          setMessages((prev) => [...prev, { role: "bot", text: "✅ Flow complete!" }]);
+          onHighlightNode(null);
+          break;
+
         case "message":
           setMessages((prev) => [...prev, { role: "bot", text: data.message || "(empty message)" }]);
           // Auto-advance after a short delay

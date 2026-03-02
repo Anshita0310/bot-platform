@@ -45,7 +45,7 @@ def run_once(flow: FlowBase, user_inputs: Dict[str, Any]) -> Dict[str, Any]:
     ctx: Dict[str, Any] = {**(user_inputs or {})}
     transcript = []
 
-    start_id = next(n.id for n in flow.nodes if n.type == "Start")
+    start_id = next(n.id for n in flow.nodes if n.type.lower() == "start")
     current = start_id
     visited_steps = 0
     safety_limit = 1000
@@ -53,20 +53,21 @@ def run_once(flow: FlowBase, user_inputs: Dict[str, Any]) -> Dict[str, Any]:
     while visited_steps < safety_limit and current is not None:
         visited_steps += 1
         node = nodes[current]
-        ntype = node.type
+        ntype = node.type.lower()
 
-        if ntype == "BotMessage":
-            transcript.append({"role": "bot", "text": node.data.get("text", "")})
+        if ntype == "message":
+            transcript.append({"role": "bot", "text": node.data.get("message", node.data.get("text", ""))})
             next_edges = edges.get(current, [])
             current = next_edges[0].target if next_edges else None
 
-        elif ntype == "UserInput":
-            var = node.data.get("variable", "user_input")
+        elif ntype == "entity":
+            var = node.data.get("entityName", node.data.get("variable", "user_input"))
+            transcript.append({"role": "bot", "text": node.data.get("prompt", f"Please provide {var}")})
             transcript.append({"role": "user", "var": var, "value": ctx.get(var, "")})
             next_edges = edges.get(current, [])
             current = next_edges[0].target if next_edges else None
 
-        elif ntype == "Condition":
+        elif ntype == "confirmation":
             conds = node.data.get("conditions", [])
             target = None
             for c in conds:
@@ -78,19 +79,16 @@ def run_once(flow: FlowBase, user_inputs: Dict[str, Any]) -> Dict[str, Any]:
                 target = next_edges[0].target if next_edges else None
             current = target
 
-        elif ntype == "SetVariable":
-            var = node.data.get("variable")
-            value = node.data.get("value")
-            if var:
-                ctx[var] = value
+        elif ntype == "tool":
+            transcript.append({"role": "bot", "text": f"[tool: {node.data.get('toolName', 'unknown')}]"})
             next_edges = edges.get(current, [])
             current = next_edges[0].target if next_edges else None
 
-        elif ntype == "Start":
+        elif ntype == "start":
             next_edges = edges.get(current, [])
             current = next_edges[0].target if next_edges else None
 
-        elif ntype == "End":
+        elif ntype == "end":
             break
 
         else:
